@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Praxis — Convert What You Know Into What You Do</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0a0a0a;
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            animation: fadeIn 0.6s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .screen {
+            display: none;
+            animation: fadeIn 0.6s ease-in;
+        }
+
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.hidden {
+            display: none;
+        }
+
+        .modal-content {
+            background-color: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 40px;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .modal-content h2 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .modal-content p {
+            font-size: 14px;
+            color: #999;
+            margin-bottom: 24px;
+            line-height: 1.6;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 12px;
+            background-color: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .modal-content input::placeholder {
+            color: #555;
+        }
+
+        .modal-content input:focus {
+            outline: none;
+            border-color: #6c63ff;
+        }
+
+        /* Landing Screen */
+        .screen-landing {
+            text-align: center;
+            gap: 32px;
+        }
+
+        .screen-landing h1 {
+            font-size: 64px;
+            font-weight: 700;
+            letter-spacing: -2px;
+            margin-bottom: 8px;
+        }
+
+        .screen-landing h2 {
+            font-size: 18px;
+            font-weight: 400;
+            color: #999;
+            margin-bottom: 40px;
+        }
+
+        .screen-landing textarea {
+            width: 100%;
+            height: 160px;
+            background-color: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 16px;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            resize: none;
+            transition: border-color 0.3s;
+        }
+
+        .screen-landing textarea:focus {
+            outline: none;
+            border-color: #6c63ff;
+        }
+
+        .screen-landing textarea::placeholder {
+            color: #555;
+        }
+
+        .screen-landing .footer-text {
+            font-size: 12px;
+            color: #555;
+            margin-top: 20px;
+        }
+
+        /* Interrogation Screen */
+        .screen-interrogation {
+            gap: 24px;
+        }
+
+        .question-number {
+            font-size: 12px;
+            color: #666;
+            text-align: right;
+            margin-bottom: 8px;
+        }
+
+        .screen-interrogation h2 {
+            font-size: 32px;
+            font-weight: 600;
+            line-height: 1.4;
+            margin-bottom: 24px;
+        }
+
+        .screen-interrogation textarea {
+            width: 100%;
+            height: 140px;
+            background-color: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 16px;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            resize: none;
+            transition: border-color 0.3s;
+        }
+
+        .screen-interrogation textarea:focus {
+            outline: none;
+            border-color: #6c63ff;
+        }
+
+        .screen-interrogation textarea::placeholder {
+            color: #555;
+        }
+
+        /* Micro-Action Screen */
+        .screen-micro-action {
+            gap: 32px;
+            text-align: center;
+        }
+
+        .screen-micro-action h2 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #999;
+        }
+
+        .action-card {
+            background-color: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 32px;
+            margin: 20px 0;
+        }
+
+        .action-card .if-then {
+            font-size: 28px;
+            font-weight: 600;
+            color: #6c63ff;
+            line-height: 1.6;
+            margin: 24px 0;
+        }
+
+        .action-card .why-text {
+            font-size: 14px;
+            color: #999;
+            line-height: 1.6;
+            margin-top: 20px;
+        }
+
+        /* Loading Screen */
+        .screen-loading {
+            gap: 24px;
+            text-align: center;
+            justify-content: center;
+            min-height: 300px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #333;
+            border-top: 2px solid #6c63ff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-text {
+            font-size: 16px;
+            color: #666;
+        }
+
+        /* Buttons */
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .button-group.full {
+            flex-direction: column;
+        }
+
+        button {
+            flex: 1;
+            padding: 14px 24px;
+            background-color: #6c63ff;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s, opacity 0.3s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        button:hover {
+            background-color: #7d72ff;
+        }
+
+        button:active {
+            opacity: 0.9;
+        }
+
+        button.secondary {
+            background-color: #333;
+            color: #fff;
+        }
+
+        button.secondary:hover {
+            background-color: #444;
+        }
+
+        /* Error Screen */
+        .screen-error {
+            gap: 24px;
+            text-align: center;
+        }
+
+        .error-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .error-message {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .error-detail {
+            font-size: 14px;
+            color: #999;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .screen-landing h1 {
+                font-size: 48px;
+            }
+
+            .screen-landing h2 {
+                font-size: 16px;
+            }
+
+            .screen-interrogation h2 {
+                font-size: 24px;
+            }
+
+            .action-card .if-then {
+                font-size: 20px;
+            }
+
+            .modal-content {
+                padding: 30px;
+            }
+        }
+
+        .copy-feedback {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #6c63ff;
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            animation: slideIn 0.4s ease-out;
+            z-index: 999;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- API Key Modal -->
+    <div id="apiKeyModal" class="modal">
+        <div class="modal-content">
+            <h2>Welcome to Praxis</h2>
+            <p>Enter your Anthropic API key to get started. Your key is stored only in this session.</p>
+            <input type="password" id="apiKeyInput" placeholder="sk-ant-..." />
+            <button onclick="saveApiKey()">Save Key</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Screen 1: Landing -->
+        <div id="screenLanding" class="screen screen-landing active">
+            <h1>Praxis</h1>
+            <h2>Convert what you know into what you do.</h2>
+            <textarea id="insightInput" placeholder="Paste an insight, highlight, or idea that should change your behavior..."></textarea>
+            <button onclick="beginConversion()">Begin Conversion →</button>
+            <div class="footer-text">No storage. No dashboard. Just the bridge.</div>
+        </div>
+
+        <!-- Screen 2-6: Interrogation -->
+        <div id="screenInterrogation" class="screen screen-interrogation">
+            <div class="question-number" id="questionNumber"></div>
+            <h2 id="questionText"></h2>
+            <textarea id="answerInput" placeholder="Your answer..."></textarea>
+            <button onclick="nextQuestion()">Next →</button>
+        </div>
+
+        <!-- Screen 7: Loading -->
+        <div id="screenLoading" class="screen screen-loading">
+            <div class="spinner"></div>
+            <div class="loading-text">Praxis is analyzing your responses...</div>
+        </div>
+
+        <!-- Screen 8: Micro-Action -->
+        <div id="screenMicroAction" class="screen screen-micro-action">
+            <h2>Your Implementation Intention</h2>
+            <div class="action-card">
+                <div class="if-then" id="ifThenStatement"></div>
+                <div class="why-text"><strong>Why this works:</strong> <span id="whyStatement"></span></div>
+            </div>
+            <div class="button-group">
+                <button onclick="copyToClipboard()">Copy</button>
+                <button class="secondary" onclick="startOver()">Start Over</button>
+            </div>
+        </div>
+
+        <!-- Screen 9: Error -->
+        <div id="screenError" class="screen screen-error">
+            <div class="error-icon">⚠️</div>
+            <div class="error-message">Something went wrong.</div>
+            <div class="error-detail" id="errorDetail">Check your API key and try again.</div>
+            <button onclick="retryError()">Try Again</button>
+        </div>
+    </div>
+
+    <script>
+        let ANTHROPIC_API_KEY = "";
+        let appState = {
+            insight: "",
+            questions: [],
+            answers: [],
+            currentQuestion: 0,
+            microAction: null
+        };
+
+        function showModal() {
+            const modal = document.getElementById("apiKeyModal");
+            const savedKey = sessionStorage.getItem("anthropic_api_key");
+            
+            if (savedKey) {
+                ANTHROPIC_API_KEY = savedKey;
+                modal.classList.add("hidden");
+            } else {
+                modal.classList.remove("hidden");
+            }
+        }
+
+        function saveApiKey() {
+            const key = document.getElementById("apiKeyInput").value.trim();
+            if (key) {
+                ANTHROPIC_API_KEY = key;
+                sessionStorage.setItem("anthropic_api_key", key);
+                document.getElementById("apiKeyModal").classList.add("hidden");
+            } else {
+                alert("Please enter a valid API key.");
+            }
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+            document.getElementById(screenId).classList.add("active");
+        }
+
+        async function beginConversion() {
+            const insight = document.getElementById("insightInput").value.trim();
+            if (!insight) {
+                alert("Please enter an insight or idea.");
+                return;
+            }
+
+            appState.insight = insight;
+            appState.answers = [];
+            appState.currentQuestion = 0;
+
+            showScreen("screenLoading");
+
+            try {
+                const questions = await generateQuestions(insight);
+                appState.questions = questions;
+                displayQuestion();
+            } catch (error) {
+                showError("Failed to generate questions. " + error.message);
+            }
+        }
+
+        async function generateQuestions(insight) {
+            const systemPrompt = `You are Praxis — a behavioral conversion engine, not a coach.
+Your job is NOT to motivate, summarize, or validate.
+Your job is to force the user to convert a theoretical insight into a concrete behavioral action through targeted interrogation.
+
+You will receive a user's insight. You must generate exactly 5 questions, one at a time.
+Each question must:
+- Be specific to what the user wrote
+- Force them to generate their own meaning (never assume or summarize for them)
+- Progressively deepen from situational → emotional → action
+
+Question sequence logic:
+Q1: What does this insight mean for your specific current situation? (situational grounding)
+Q2: What belief or behavior of yours does this directly contradict? (identity confrontation)
+Q3: You've probably had a version of this insight before. What happened? (pattern surfacing)
+Q4: What is the actual specific blocker — not the general excuse, the real one? (blocker diagnosis)
+Q5: What is the smallest physical action you could do tomorrow that would prove this insight is real for you? (micro-action seed)
+
+Return ONLY a JSON array of 5 question strings. No explanation. No preamble.
+Example format: ["question1", "question2", "question3", "question4", "question5"]`;
+
+            const response = await fetch("https://api.anthropic.com/v1/messages", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-api-key": ANTHROPIC_API_KEY,
+                    "anthropic-version": "2023-06-01",
+                    "anthropic-dangerous-direct-browser-access": "true"
+                },
+                body: JSON.stringify({
+                    model: "claude-sonnet-4-20250514",
+                    max_tokens: 1000,
+                    system: systemPrompt,
+                    messages: [{
+                        role: "user",
+                        content: insight
+                    }]
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error?.message || "API request failed");
+            }
+
+            const data = await response.json();
+            const content = data.content[0].text;
+            
+            try {
+                const questions = JSON.parse(content);
+                if (!Array.isArray(questions) || questions.length !== 5) {
+                    throw new Error("Invalid response format");
+                }
+                return questions;
+            } catch (e) {
+                throw new Error("Failed to parse API response");
+            }
+        }
+
+        function displayQuestion() {
+            const questionNum = appState.currentQuestion + 1;
+            document.getElementById("questionNumber").textContent = `${questionNum} of 5`;
+            document.getElementById("questionText").textContent = appState.questions[appState.currentQuestion];
+            document.getElementById("answerInput").value = appState.answers[appState.currentQuestion] || "";
+            
+            showScreen("screenInterrogation");
+            document.getElementById("answerInput").focus();
+        }
+
+        function nextQuestion() {
+            const answer = document.getElementById("answerInput").value.trim();
+            if (!answer) {
+                alert("Please provide an answer before continuing.");
+                return;
+            }
+
+            appState.answers[appState.currentQuestion] = answer;
+            appState.currentQuestion++;
+
+            if (appState.currentQuestion < 5) {
+                displayQuestion();
+            } else {
+                generateMicroAction();
+            }
+        }
+
+        async function generateMicroAction() {
+            showScreen("screenLoading");
+
+            try {
+                const microAction = await fetchMicroAction();
+                appState.microAction = microAction;
+                displayMicroAction();
+            } catch (error) {
+                showError("Failed to generate implementation intention. " + error.message);
+            }
+        }
+
+        async function fetchMicroAction() {
+            const systemPrompt = `You are Praxis. You have asked a user 5 interrogation questions about an insight they consumed.
+Based on their answers, generate ONE implementation intention in strict if-then format.
+
+Rules:
+- The action must be anchored to an existing daily event the user already does (event-based cue)
+- The action must be small enough to do in under 5 minutes
+- Do NOT use time-based triggers ("at 9am") — only event-based ("after I...")
+- The output must feel like it was written specifically for this person
+
+Return ONLY a JSON object with this exact structure:
+{
+  "cue": "the existing event/trigger",
+  "action": "the specific micro-action",
+  "full": "If [cue], then I will [action].",
+  "why": "one sentence connecting this action back to their insight"
+}`;
+
+            const userMessage = `
+Insight: "${appState.insight}"
+
+Question 1: ${appState.questions[0]}
+Answer 1: ${appState.answers[0]}
+
+Question 2: ${appState.questions[1]}
+Answer 2: ${appState.answers[1]}
+
+Question 3: ${appState.questions[2]}
+Answer 3: ${appState.answers[2]}
+
+Question 4: ${appState.questions[3]}
+Answer 4: ${appState.answers[3]}
+
+Question 5: ${appState.questions[4]}
+Answer 5: ${appState.answers[4]}`;
+
+            const response = await fetch("https://api.anthropic.com/v1/messages", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-api-key": ANTHROPIC_API_KEY,
+                    "anthropic-version": "2023-06-01",
+                    "anthropic-dangerous-direct-browser-access": "true"
+                },
+                body: JSON.stringify({
+                    model: "claude-sonnet-4-20250514",
+                    max_tokens: 1000,
+                    system: systemPrompt,
+                    messages: [{
+                        role: "user",
+                        content: userMessage
+                    }]
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error?.message || "API request failed");
+            }
+
+            const data = await response.json();
+            const content = data.content[0].text;
+
+            try {
+                const microAction = JSON.parse(content);
+                if (!microAction.cue || !microAction.action || !microAction.full || !microAction.why) {
+                    throw new Error("Invalid response structure");
+                }
+                return microAction;
+            } catch (e) {
+                throw new Error("Failed to parse micro-action response");
+            }
+        }
+
+        function displayMicroAction() {
+            document.getElementById("ifThenStatement").textContent = appState.microAction.full;
+            document.getElementById("whyStatement").textContent = appState.microAction.why;
+            showScreen("screenMicroAction");
+        }
+
+        function copyToClipboard() {
+            const text = `${appState.microAction.full}\n\nWhy this works: ${appState.microAction.why}`;
+            navigator.clipboard.writeText(text).then(() => {
+                const feedback = document.createElement("div");
+                feedback.className = "copy-feedback";
+                feedback.textContent = "✓ Copied to clipboard";
+                document.body.appendChild(feedback);
+                setTimeout(() => feedback.remove(), 2000);
+            });
+        }
+
+        function startOver() {
+            appState = {
+                insight: "",
+                questions: [],
+                answers: [],
+                currentQuestion: 0,
+                microAction: null
+            };
+            document.getElementById("insightInput").value = "";
+            showScreen("screenLanding");
+            document.getElementById("insightInput").focus();
+        }
+
+        function showError(message) {
+            document.getElementById("errorDetail").textContent = message;
+            showScreen("screenError");
+        }
+
+        function retryError() {
+            if (appState.currentQuestion > 0) {
+                displayQuestion();
+            } else {
+                showScreen("screenLanding");
+            }
+        }
+
+        // Initialize
+        window.addEventListener("DOMContentLoaded", () => {
+            showModal();
+            document.getElementById("insightInput").focus();
+        });
+
+        // Allow Enter key in modals
+        document.getElementById("apiKeyInput")?.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") saveApiKey();
+        });
+
+        // Allow Ctrl+Enter to submit insight
+        document.getElementById("insightInput")?.addEventListener("keypress", (e) => {
+            if (e.ctrlKey && e.key === "Enter") beginConversion();
+        });
+    </script>
+</body>
+</html>
