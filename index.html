@@ -37,12 +37,12 @@
             width: 100%;
             opacity: 0;
             transition: opacity 0.4s ease-in-out;
-            pointer-events: none;
+            display: none;
         }
 
         .screen.active {
             opacity: 1;
-            pointer-events: auto;
+            display: block;
         }
 
         /* Landing Screen */
@@ -120,6 +120,11 @@
             cursor: not-allowed;
             opacity: 0.6;
             transform: none;
+        }
+
+        .button-secondary:disabled {
+            background-color: transparent;
+            border-color: #333333;
         }
 
         .small-text {
@@ -413,7 +418,7 @@
 
     <script>
         // Configuration
-        const ANTHROPIC_API_KEY = "";
+        const DEFAULT_ANTHROPIC_API_KEY = "";
         const ANTHROPIC_MODEL = "claude-sonnet-4-20250514";
         const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 
@@ -476,7 +481,7 @@ Return ONLY a JSON object with this exact structure:
 
         // Check if API key is set
         function checkAndShowAPIKeyModal() {
-            state.apiKey = ANTHROPIC_API_KEY || sessionStorage.getItem('praxis_api_key') || '';
+            state.apiKey = DEFAULT_ANTHROPIC_API_KEY || sessionStorage.getItem('praxis_api_key') || '';
             
             if (!state.apiKey) {
                 document.getElementById('apiKeyModal').classList.add('active');
@@ -544,6 +549,7 @@ Return ONLY a JSON object with this exact structure:
         function renderInterrogation() {
             const question = state.questions[state.currentQuestionIndex];
             const isLastQuestion = state.currentQuestionIndex === 4;
+            const canGoBack = state.currentQuestionIndex > 0;
 
             return `
                 <div class="screen interrogation active">
@@ -555,7 +561,7 @@ Return ONLY a JSON object with this exact structure:
                     <form class="question-form" id="questionForm">
                         <textarea class="question-textarea" id="answerInput" placeholder="Your answer..." required></textarea>
                         <div class="button-group">
-                            <button type="button" class="button-secondary" id="backButton">← Back</button>
+                            <button type="button" class="button-secondary" id="backButton" ${!canGoBack ? 'disabled' : ''}>← Back</button>
                             <button type="submit">${isLastQuestion ? 'Generate Action →' : 'Next →'}</button>
                         </div>
                     </form>
