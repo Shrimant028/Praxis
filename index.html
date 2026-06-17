@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Praxis — Convert Knowledge Into Action</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0a0a0a;
+            color: #e8e8e8;
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        #app {
+            width: 100%;
+            max-width: 600px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .screen {
+            width: 100%;
+            opacity: 0;
+            transition: opacity 0.4s ease-in-out;
+            pointer-events: none;
+        }
+
+        .screen.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Landing Screen */
+        .landing {
+            text-align: center;
+        }
+
+        .landing h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #ffffff;
+        }
+
+        .landing .subheading {
+            font-size: 1.1rem;
+            color: #b4b4b4;
+            margin-bottom: 48px;
+            font-weight: 400;
+        }
+
+        .landing-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        textarea {
+            min-height: 140px;
+            padding: 16px;
+            background-color: #1a1a1a;
+            border: 1px solid #333333;
+            border-radius: 8px;
+            color: #e8e8e8;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        textarea:focus {
+            border-color: #6c63ff;
+        }
+
+        textarea::placeholder {
+            color: #666666;
+        }
+
+        button {
+            padding: 14px 24px;
+            background-color: #6c63ff;
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        button:hover {
+            background-color: #7d73ff;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(108, 99, 255, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background-color: #444444;
+            cursor: not-allowed;
+            opacity: 0.6;
+            transform: none;
+        }
+
+        .small-text {
+            font-size: 0.85rem;
+            color: #666666;
+            margin-top: 24px;
+        }
+
+        /* Interrogation Screen */
+        .interrogation {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 100vh;
+            padding: 40px 0;
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 48px;
+        }
+
+        .question-number {
+            font-size: 0.85rem;
+            color: #666666;
+            font-weight: 500;
+        }
+
+        .question-text {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 32px;
+            line-height: 1.4;
+        }
+
+        .question-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .question-textarea {
+            min-height: 120px;
+            padding: 16px;
+            background-color: #1a1a1a;
+            border: 1px solid #333333;
+            border-radius: 8px;
+            color: #e8e8e8;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .question-textarea:focus {
+            border-color: #6c63ff;
+        }
+
+        .question-textarea::placeholder {
+            color: #666666;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            justify-content: space-between;
+        }
+
+        .button-group button {
+            flex: 1;
+        }
+
+        .button-secondary {
+            background-color: transparent;
+            border: 1px solid #444444;
+            color: #b4b4b4;
+        }
+
+        .button-secondary:hover {
+            background-color: #1a1a1a;
+            border-color: #6c63ff;
+            color: #e8e8e8;
+        }
+
+        /* Micro-Action Screen */
+        .micro-action {
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        .loading-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            gap: 20px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #333333;
+            border-top-color: #6c63ff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #b4b4b4;
+            font-size: 1rem;
+        }
+
+        .micro-action-card {
+            background-color: #1a1a1a;
+            border: 1px solid #333333;
+            border-radius: 12px;
+            padding: 40px 24px;
+            margin-bottom: 32px;
+        }
+
+        .action-headline {
+            font-size: 0.9rem;
+            color: #666666;
+            font-weight: 500;
+            margin-bottom: 24px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .action-statement {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #6c63ff;
+            margin-bottom: 24px;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+
+        .action-why {
+            font-size: 0.95rem;
+            color: #b4b4b4;
+            margin-bottom: 28px;
+            line-height: 1.6;
+        }
+
+        .action-why strong {
+            color: #e8e8e8;
+        }
+
+        .error-state {
+            background-color: #2a1515;
+            border: 1px solid #5c2d2d;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            font-size: 0.95rem;
+            margin-bottom: 0;
+        }
+
+        /* API Key Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background-color: #1a1a1a;
+            border: 1px solid #333333;
+            border-radius: 12px;
+            padding: 32px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .modal-content h2 {
+            font-size: 1.3rem;
+            margin-bottom: 16px;
+            color: #ffffff;
+        }
+
+        .modal-content p {
+            color: #b4b4b4;
+            margin-bottom: 24px;
+            font-size: 0.95rem;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 12px;
+            background-color: #0a0a0a;
+            border: 1px solid #333333;
+            border-radius: 6px;
+            color: #e8e8e8;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+            outline: none;
+        }
+
+        .modal-input:focus {
+            border-color: #6c63ff;
+        }
+
+        .modal-input::placeholder {
+            color: #666666;
+        }
+
+        .modal-button {
+            width: 100%;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            body {
+                padding: 16px;
+            }
+
+            .landing h1 {
+                font-size: 2rem;
+            }
+
+            .landing .subheading {
+                font-size: 1rem;
+                margin-bottom: 32px;
+            }
+
+            .question-text {
+                font-size: 1.2rem;
+            }
+
+            .action-statement {
+                font-size: 1.1rem;
+            }
+
+            .interrogation {
+                padding: 24px 0;
+            }
+
+            .question-header {
+                margin-bottom: 32px;
+            }
+
+            textarea,
+            .question-textarea {
+                min-height: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <div id="apiKeyModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Praxis</h2>
+            <p>Enter your Anthropic API key to use Praxis</p>
+            <input type="password" id="apiKeyInput" class="modal-input" placeholder="sk-ant-...">
+            <button id="apiKeySaveButton" class="modal-button">Save API Key</button>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const ANTHROPIC_API_KEY = "";
+        const ANTHROPIC_MODEL = "claude-sonnet-4-20250514";
+        const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
+
+        // State management
+        let state = {
+            currentScreen: 'landing',
+            insight: '',
+            questions: [],
+            answers: [],
+            currentQuestionIndex: 0,
+            microAction: null,
+            apiKey: '',
+            error: null
+        };
+
+        // System prompts
+        const INTERROGATION_SYSTEM_PROMPT = `You are Praxis — a behavioral conversion engine, not a coach.
+Your job is NOT to motivate, summarize, or validate.
+Your job is to force the user to convert a theoretical insight into a concrete behavioral action through targeted interrogation.
+
+You will receive a user's insight. You must generate exactly 5 questions, one at a time.
+Each question must:
+- Be specific to what the user wrote
+- Force them to generate their own meaning (never assume or summarize for them)
+- Progressively deepen from situational → emotional → action
+
+Question sequence logic:
+Q1: What does this insight mean for your specific current situation? (situational grounding)
+Q2: What belief or behavior of yours does this directly contradict? (identity confrontation)
+Q3: You've probably had a version of this insight before. What happened? (pattern surfacing)
+Q4: What is the actual specific blocker — not the general excuse, the real one? (blocker diagnosis)
+Q5: What is the smallest physical action you could do tomorrow that would prove this insight is real for you? (micro-action seed)
+
+Return ONLY a JSON array of 5 question strings. No explanation. No preamble.
+Example format: ["question1", "question2", "question3", "question4", "question5"]`;
+
+        const MICRO_ACTION_SYSTEM_PROMPT = `You are Praxis. You have asked a user 5 interrogation questions about an insight they consumed.
+Based on their answers, generate ONE implementation intention in strict if-then format.
+
+Rules:
+- The action must be anchored to an existing daily event the user already does (event-based cue)
+- The action must be small enough to do in under 5 minutes
+- Do NOT use time-based triggers ("at 9am") — only event-based ("after I...")
+- The output must feel like it was written specifically for this person
+
+Return ONLY a JSON object with this exact structure:
+{
+  "cue": "the existing event/trigger",
+  "action": "the specific micro-action",
+  "full": "If [cue], then I will [action].",
+  "why": "one sentence connecting this action back to their insight"
+}`;
+
+        // Initialize app
+        function init() {
+            checkAndShowAPIKeyModal();
+            render();
+            attachEventListeners();
+        }
+
+        // Check if API key is set
+        function checkAndShowAPIKeyModal() {
+            state.apiKey = ANTHROPIC_API_KEY || sessionStorage.getItem('praxis_api_key') || '';
+            
+            if (!state.apiKey) {
+                document.getElementById('apiKeyModal').classList.add('active');
+            }
+        }
+
+        // Handle API key save
+        document.addEventListener('DOMContentLoaded', function() {
+            const apiKeySaveButton = document.getElementById('apiKeySaveButton');
+            const apiKeyInput = document.getElementById('apiKeyInput');
+
+            if (apiKeySaveButton) {
+                apiKeySaveButton.addEventListener('click', function() {
+                    const apiKey = apiKeyInput.value.trim();
+                    if (apiKey) {
+                        state.apiKey = apiKey;
+                        sessionStorage.setItem('praxis_api_key', apiKey);
+                        document.getElementById('apiKeyModal').classList.remove('active');
+                    }
+                });
+
+                apiKeyInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        apiKeySaveButton.click();
+                    }
+                });
+            }
+
+            init();
+        });
+
+        // Main render function
+        function render() {
+            const app = document.getElementById('app');
+            
+            if (state.currentScreen === 'landing') {
+                app.innerHTML = renderLanding();
+            } else if (state.currentScreen === 'interrogation') {
+                app.innerHTML = renderInterrogation();
+            } else if (state.currentScreen === 'loading') {
+                app.innerHTML = renderLoading();
+            } else if (state.currentScreen === 'micro-action') {
+                app.innerHTML = renderMicroAction();
+            }
+
+            attachEventListeners();
+        }
+
+        // Screen: Landing
+        function renderLanding() {
+            return `
+                <div class="screen landing active">
+                    <h1>Praxis</h1>
+                    <p class="subheading">Convert what you know into what you do.</p>
+                    <form class="landing-form" id="landingForm">
+                        <textarea id="insightInput" placeholder="Paste an insight, highlight, or idea that should change your behavior..." required></textarea>
+                        <button type="submit">Begin Conversion →</button>
+                    </form>
+                    <p class="small-text">No storage. No dashboard. Just the bridge.</p>
+                </div>
+            `;
+        }
+
+        // Screen: Interrogation
+        function renderInterrogation() {
+            const question = state.questions[state.currentQuestionIndex];
+            const isLastQuestion = state.currentQuestionIndex === 4;
+
+            return `
+                <div class="screen interrogation active">
+                    <div class="question-header">
+                        <div></div>
+                        <div class="question-number">${state.currentQuestionIndex + 1} of 5</div>
+                    </div>
+                    <div class="question-text">${escapeHtml(question)}</div>
+                    <form class="question-form" id="questionForm">
+                        <textarea class="question-textarea" id="answerInput" placeholder="Your answer..." required></textarea>
+                        <div class="button-group">
+                            <button type="button" class="button-secondary" id="backButton">← Back</button>
+                            <button type="submit">${isLastQuestion ? 'Generate Action →' : 'Next →'}</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+        }
+
+        // Screen: Loading
+        function renderLoading() {
+            return `
+                <div class="screen loading-state active">
+                    <div class="spinner"></div>
+                    <p class="loading-text">Praxis is analyzing your responses...</p>
+                </div>
+            `;
+        }
+
+        // Screen: Micro-Action
+        function renderMicroAction() {
+            if (state.error) {
+                return `
+                    <div class="screen micro-action active">
+                        <div class="error-state">
+                            <p class="error-message">${escapeHtml(state.error)}</p>
+                        </div>
+                        <button id="retryButton">Try Again</button>
+                        <button id="startOverButton" class="button-secondary" style="margin-top: 12px;">Start Over</button>
+                    </div>
+                `;
+            }
+
+            const action = state.microAction;
+            if (!action) return '';
+
+            return `
+                <div class="screen micro-action active">
+                    <div class="micro-action-card">
+                        <div class="action-headline">Your Implementation Intention</div>
+                        <div class="action-statement">${escapeHtml(action.full)}</div>
+                        <div class="action-why"><strong>Why this works:</strong> ${escapeHtml(action.why)}</div>
+                    </div>
+                    <div class="button-group">
+                        <button id="copyButton">Copy</button>
+                        <button id="startOverButton" class="button-secondary">Start Over</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Event listeners
+        function attachEventListeners() {
+            if (state.currentScreen === 'landing') {
+                const form = document.getElementById('landingForm');
+                if (form) {
+                    form.addEventListener('submit', handleLandingSubmit);
+                }
+            } else if (state.currentScreen === 'interrogation') {
+                const form = document.getElementById('questionForm');
+                const backButton = document.getElementById('backButton');
+                if (form) {
+                    form.addEventListener('submit', handleQuestionSubmit);
+                }
+                if (backButton) {
+                    backButton.addEventListener('click', handleBackButton);
+                }
+            } else if (state.currentScreen === 'micro-action') {
+                const copyButton = document.getElementById('copyButton');
+                const startOverButtons = document.querySelectorAll('#startOverButton');
+                const retryButton = document.getElementById('retryButton');
+
+                if (copyButton) {
+                    copyButton.addEventListener('click', handleCopyButton);
+                }
+                startOverButtons.forEach(btn => {
+                    btn.addEventListener('click', handleStartOver);
+                });
+                if (retryButton) {
+                    retryButton.addEventListener('click', handleRetry);
+                }
+            }
+        }
+
+        // Handlers
+        async function handleLandingSubmit(e) {
+            e.preventDefault();
+            const insight = document.getElementById('insightInput').value.trim();
+            if (!insight) return;
+
+            state.insight = insight;
+            state.currentScreen = 'loading';
+            render();
+
+            try {
+                const questions = await generateQuestions(insight);
+                state.questions = questions;
+                state.currentQuestionIndex = 0;
+                state.answers = [];
+                state.currentScreen = 'interrogation';
+                state.error = null;
+                render();
+            } catch (error) {
+                state.error = 'Something went wrong. Check your API key and try again.';
+                state.currentScreen = 'micro-action';
+                render();
+            }
+        }
+
+        async function handleQuestionSubmit(e) {
+            e.preventDefault();
+            const answer = document.getElementById('answerInput').value.trim();
+            if (!answer) return;
+
+            state.answers.push(answer);
+            const isLastQuestion = state.currentQuestionIndex === 4;
+
+            if (isLastQuestion) {
+                state.currentScreen = 'loading';
+                render();
+
+                try {
+                    const microAction = await generateMicroAction(state.insight, state.answers);
+                    state.microAction = microAction;
+                    state.currentScreen = 'micro-action';
+                    state.error = null;
+                    render();
+                } catch (error) {
+                    state.error = 'Something went wrong. Check your API key and try again.';
+                    state.currentScreen = 'micro-action';
+                    render();
+                }
+            } else {
+                state.currentQuestionIndex += 1;
+                state.currentScreen = 'interrogation';
+                render();
+            }
+        }
+
+        function handleBackButton(e) {
+            e.preventDefault();
+            if (state.currentQuestionIndex > 0) {
+                state.currentQuestionIndex -= 1;
+                state.answers.pop();
+                render();
+            }
+        }
+
+        function handleCopyButton() {
+            const text = state.microAction.full;
+            navigator.clipboard.writeText(text).then(() => {
+                const button = document.getElementById('copyButton');
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                }, 2000);
+            });
+        }
+
+        function handleStartOver() {
+            state = {
+                currentScreen: 'landing',
+                insight: '',
+                questions: [],
+                answers: [],
+                currentQuestionIndex: 0,
+                microAction: null,
+                apiKey: state.apiKey,
+                error: null
+            };
+            render();
+        }
+
+        function handleRetry() {
+            state.currentScreen = 'loading';
+            state.error = null;
+            render();
+
+            generateMicroAction(state.insight, state.answers)
+                .then(microAction => {
+                    state.microAction = microAction;
+                    state.currentScreen = 'micro-action';
+                    render();
+                })
+                .catch(error => {
+                    state.error = 'Something went wrong. Check your API key and try again.';
+                    state.currentScreen = 'micro-action';
+                    render();
+                });
+        }
+
+        // API calls
+        async function generateQuestions(insight) {
+            const response = await callAnthropicAPI(
+                INTERROGATION_SYSTEM_PROMPT,
+                `Generate 5 interrogation questions for this insight:\n\n"${insight}"`
+            );
+
+            try {
+                const questions = JSON.parse(response);
+                if (Array.isArray(questions) && questions.length === 5) {
+                    return questions;
+                }
+                throw new Error('Invalid response format');
+            } catch (error) {
+                throw new Error('Failed to parse questions');
+            }
+        }
+
+        async function generateMicroAction(insight, answers) {
+            const answerText = answers
+                .map((answer, i) => `Q${i + 1}: ${answer}`)
+                .join('\n\n');
+
+            const prompt = `Insight: "${insight}"\n\nAnswers:\n${answerText}`;
+
+            const response = await callAnthropicAPI(
+                MICRO_ACTION_SYSTEM_PROMPT,
+                prompt
+            );
+
+            try {
+                const microAction = JSON.parse(response);
+                if (microAction.cue && microAction.action && microAction.full && microAction.why) {
+                    return microAction;
+                }
+                throw new Error('Invalid response format');
+            } catch (error) {
+                throw new Error('Failed to parse micro-action');
+            }
+        }
+
+        async function callAnthropicAPI(systemPrompt, userMessage) {
+            if (!state.apiKey) {
+                throw new Error('No API key provided');
+            }
+
+            const response = await fetch(ANTHROPIC_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': state.apiKey,
+                    'anthropic-version': '2023-06-01',
+                    'anthropic-dangerous-direct-browser-access': 'true'
+                },
+                body: JSON.stringify({
+                    model: ANTHROPIC_MODEL,
+                    max_tokens: 1000,
+                    system: systemPrompt,
+                    messages: [
+                        {
+                            role: 'user',
+                            content: userMessage
+                        }
+                    ]
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error?.message || 'API request failed');
+            }
+
+            const data = await response.json();
+            if (data.content && data.content[0] && data.content[0].text) {
+                return data.content[0].text;
+            }
+
+            throw new Error('Invalid API response');
+        }
+
+        // Utility
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
