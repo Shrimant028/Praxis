@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Praxis — Convert Knowledge Into Action</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Praxis — Convert Insight to Action</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -12,832 +12,686 @@
             box-sizing: border-box;
         }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0a0a0a;
-            color: #e8e8e8;
+        html, body {
+            width: 100%;
+            height: 100%;
+            background: #080808;
+            color: #e0e0e0;
+            font-family: 'DM Mono', monospace;
+            font-size: 14px;
             line-height: 1.6;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
+            overflow: hidden;
         }
 
-        #app {
-            width: 100%;
-            max-width: 600px;
-            min-height: 100vh;
+        body {
+            position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
+        }
+
+        /* SVG grain overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Cfilter id="noise"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" result="noise" /%3E%3C/filter%3E%3Crect width="100" height="100" fill="%23080808" filter="url(%23noise)" opacity="0.03"/%3E%3C/svg%3E');
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        main {
+            position: relative;
+            z-index: 2;
+            width: 90%;
+            max-width: 700px;
+            height: 90vh;
+            max-height: 900px;
+            display: flex;
+            flex-direction: column;
         }
 
         .screen {
+            position: absolute;
             width: 100%;
+            height: 100%;
             opacity: 0;
-            transition: opacity 0.4s ease-in-out;
-            display: none;
+            transform: translateY(20px);
+            transition: all 0.4s ease-in-out;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
         }
 
         .screen.active {
             opacity: 1;
-            display: block;
-        }
-
-        /* Landing Screen */
-        .landing {
-            text-align: center;
-        }
-
-        .landing h1 {
-            font-size: 3rem;
-            font-weight: 700;
-            margin-bottom: 12px;
-            color: #ffffff;
-        }
-
-        .landing .subheading {
-            font-size: 1.1rem;
-            color: #b4b4b4;
-            margin-bottom: 48px;
-            font-weight: 400;
-        }
-
-        .landing-form {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        textarea {
-            min-height: 140px;
-            padding: 16px;
-            background-color: #1a1a1a;
-            border: 1px solid #333333;
-            border-radius: 8px;
-            color: #e8e8e8;
-            font-family: 'Inter', sans-serif;
-            font-size: 0.95rem;
-            resize: vertical;
-            outline: none;
-            transition: border-color 0.2s ease;
-        }
-
-        textarea:focus {
-            border-color: #6c63ff;
-        }
-
-        textarea::placeholder {
-            color: #666666;
-        }
-
-        button {
-            padding: 14px 24px;
-            background-color: #6c63ff;
-            color: #ffffff;
-            border: none;
-            border-radius: 6px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-family: 'Inter', sans-serif;
-        }
-
-        button:hover {
-            background-color: #7d73ff;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(108, 99, 255, 0.3);
-        }
-
-        button:active {
             transform: translateY(0);
+            pointer-events: auto;
         }
 
-        button:disabled {
-            background-color: #444444;
-            cursor: not-allowed;
-            opacity: 0.6;
-            transform: none;
-        }
-
-        .button-secondary:disabled {
-            background-color: transparent;
-            border-color: #333333;
-        }
-
-        .small-text {
-            font-size: 0.85rem;
-            color: #666666;
-            margin-top: 24px;
-        }
-
-        /* Interrogation Screen */
-        .interrogation {
+        /* Logo row */
+        .logo-row {
             display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            min-height: 100vh;
-            padding: 40px 0;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 40px;
+            animation: pulse 2s ease-in-out infinite;
         }
 
-        .question-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 48px;
+        .logo-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #c8ff00;
         }
 
-        .question-number {
-            font-size: 0.85rem;
-            color: #666666;
+        .logo-text {
+            font-size: 11px;
+            font-family: 'Syne', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #666;
             font-weight: 500;
         }
 
-        .question-text {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #ffffff;
-            margin-bottom: 32px;
-            line-height: 1.4;
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
         }
 
-        .question-form {
+        /* ============ SCREEN 1: LANDING ============ */
+        .screen-landing h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(32px, 8vw, 56px);
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 16px;
+            color: #e0e0e0;
+        }
+
+        .screen-landing h1 .accent {
+            color: #c8ff00;
+        }
+
+        .screen-landing .subtext {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 32px;
+            max-width: 400px;
+            line-height: 1.7;
+        }
+
+        .screen-landing textarea {
+            width: 100%;
+            height: 120px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 4px;
+            color: #e0e0e0;
+            font-family: 'DM Mono', monospace;
+            font-size: 13px;
+            padding: 16px;
+            margin-bottom: 20px;
+            resize: none;
+            transition: border-color 0.2s;
+        }
+
+        .screen-landing textarea:focus {
+            outline: none;
+            border-color: #c8ff00;
+        }
+
+        .screen-landing textarea::placeholder {
+            color: #555;
+        }
+
+        .button {
+            background: #c8ff00;
+            color: #080808;
+            border: none;
+            padding: 12px 24px;
+            font-family: 'Syne', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-block;
+            align-self: flex-start;
+        }
+
+        .button:hover:not(:disabled) {
+            background: #e0ff33;
+            transform: translateX(4px);
+        }
+
+        .button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .note {
+            font-size: 11px;
+            color: #555;
+            margin-top: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* ============ SCREEN 2: QUESTIONS ============ */
+        .progress-container {
             display: flex;
-            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
             gap: 20px;
         }
 
-        .question-textarea {
-            min-height: 120px;
-            padding: 16px;
-            background-color: #1a1a1a;
-            border: 1px solid #333333;
-            border-radius: 8px;
-            color: #e8e8e8;
-            font-family: 'Inter', sans-serif;
-            font-size: 0.95rem;
-            resize: vertical;
-            outline: none;
-            transition: border-color 0.2s ease;
+        .progress-label {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            white-space: nowrap;
         }
 
-        .question-textarea:focus {
-            border-color: #6c63ff;
-        }
-
-        .question-textarea::placeholder {
-            color: #666666;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 12px;
-            justify-content: space-between;
-        }
-
-        .button-group button {
+        .progress-bar {
             flex: 1;
+            height: 2px;
+            background: #222;
+            border-radius: 1px;
+            overflow: hidden;
         }
 
-        .button-secondary {
-            background-color: transparent;
-            border: 1px solid #444444;
-            color: #b4b4b4;
+        .progress-fill {
+            height: 100%;
+            background: #c8ff00;
+            transition: width 0.3s ease-out;
         }
 
-        .button-secondary:hover {
-            background-color: #1a1a1a;
-            border-color: #6c63ff;
-            color: #e8e8e8;
+        .question-number {
+            color: #c8ff00;
+            font-family: 'Syne', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            text-transform: uppercase;
         }
 
-        /* Micro-Action Screen */
-        .micro-action {
-            text-align: center;
-            padding: 40px 0;
+        .screen-questions h2 {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(24px, 5vw, 40px);
+            font-weight: 700;
+            line-height: 1.3;
+            margin-bottom: 32px;
+            color: #e0e0e0;
         }
 
-        .loading-state {
+        .screen-questions textarea {
+            flex: 1;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 4px;
+            color: #e0e0e0;
+            font-family: 'DM Mono', monospace;
+            font-size: 13px;
+            padding: 16px;
+            margin-bottom: 20px;
+            resize: none;
+            transition: border-color 0.2s;
+        }
+
+        .screen-questions textarea:focus {
+            outline: none;
+            border-color: #c8ff00;
+        }
+
+        .screen-questions textarea::placeholder {
+            color: #555;
+        }
+
+        /* ============ SCREEN 3: PROCESSING ============ */
+        .processing-container {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
-            gap: 20px;
+            gap: 24px;
         }
 
         .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid #333333;
-            border-top-color: #6c63ff;
+            width: 48px;
+            height: 48px;
+            border: 2px solid #333;
+            border-top: 2px solid #c8ff00;
             border-radius: 50%;
-            animation: spin 0.8s linear infinite;
+            animation: spin 1s linear infinite;
         }
 
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
 
-        .loading-text {
-            color: #b4b4b4;
-            font-size: 1rem;
+        .processing-text {
+            font-family: 'Syne', sans-serif;
+            font-size: 18px;
+            font-weight: 600;
+            color: #e0e0e0;
         }
 
-        .micro-action-card {
-            background-color: #1a1a1a;
-            border: 1px solid #333333;
-            border-radius: 12px;
-            padding: 40px 24px;
+        .processing-subtext {
+            font-size: 12px;
+            color: #888;
+        }
+
+        /* ============ SCREEN 4: RESULT ============ */
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
             margin-bottom: 32px;
         }
 
-        .action-headline {
-            font-size: 0.9rem;
-            color: #666666;
-            font-weight: 500;
-            margin-bottom: 24px;
+        .result-header-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #c8ff00;
+        }
+
+        .result-header-text {
+            font-family: 'Syne', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 1px;
+            color: #c8ff00;
         }
 
-        .action-statement {
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: #6c63ff;
+        .result-label {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+
+        .result-card {
+            background: #1a1a1a;
+            border-left: 4px solid #c8ff00;
+            padding: 24px;
+            border-radius: 4px;
             margin-bottom: 24px;
-            line-height: 1.5;
-            word-break: break-word;
         }
 
-        .action-why {
-            font-size: 0.95rem;
-            color: #b4b4b4;
-            margin-bottom: 28px;
+        .result-card-statement {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(18px, 4vw, 28px);
+            font-weight: 700;
+            line-height: 1.4;
+            color: #e0e0e0;
+            margin-bottom: 24px;
+        }
+
+        .result-card-why-label {
+            font-size: 11px;
+            color: #ff6b35;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .result-card-why-text {
+            font-size: 13px;
+            color: #aaa;
             line-height: 1.6;
         }
 
-        .action-why strong {
-            color: #e8e8e8;
+        .result-actions {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
         }
 
-        .error-state {
-            background-color: #2a1515;
-            border: 1px solid #5c2d2d;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
+        .button-secondary {
+            background: #222;
+            color: #c8ff00;
+            border: 1px solid #c8ff00;
+            padding: 12px 24px;
+            font-family: 'Syne', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .button-secondary:hover {
+            background: #c8ff00;
+            color: #080808;
+            transform: translateX(4px);
         }
 
         .error-message {
-            color: #ff6b6b;
-            font-size: 0.95rem;
-            margin-bottom: 0;
-        }
-
-        /* API Key Modal */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
-
-        .modal-overlay.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .modal-content {
-            background-color: #1a1a1a;
-            border: 1px solid #333333;
-            border-radius: 12px;
-            padding: 32px;
-            max-width: 400px;
-            width: 100%;
-            text-align: center;
-        }
-
-        .modal-content h2 {
-            font-size: 1.3rem;
-            margin-bottom: 16px;
-            color: #ffffff;
-        }
-
-        .modal-content p {
-            color: #b4b4b4;
+            background: #2a1a1a;
+            border-left: 4px solid #ff6b35;
+            padding: 16px;
             margin-bottom: 24px;
-            font-size: 0.95rem;
+            border-radius: 4px;
+            color: #ff9999;
+            font-size: 13px;
         }
 
-        .modal-input {
-            width: 100%;
-            padding: 12px;
-            background-color: #0a0a0a;
-            border: 1px solid #333333;
-            border-radius: 6px;
-            color: #e8e8e8;
-            font-family: 'Inter', sans-serif;
-            font-size: 0.9rem;
-            margin-bottom: 16px;
-            outline: none;
+        .copy-feedback {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #c8ff00;
+            color: #080808;
+            padding: 12px 20px;
+            border-radius: 4px;
+            font-family: 'Syne', sans-serif;
+            font-weight: 600;
+            font-size: 12px;
+            z-index: 10;
+            animation: slideIn 0.3s ease-out;
         }
 
-        .modal-input:focus {
-            border-color: #6c63ff;
+        @keyframes slideIn {
+            from {
+                transform: translateX(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
         }
 
-        .modal-input::placeholder {
-            color: #666666;
-        }
-
-        .modal-button {
-            width: 100%;
-        }
-
-        /* Responsive */
-        @media (max-width: 640px) {
-            body {
-                padding: 16px;
+        /* Mobile responsiveness */
+        @media (max-width: 600px) {
+            main {
+                width: 95%;
+                height: 95vh;
             }
 
-            .landing h1 {
-                font-size: 2rem;
+            .screen-landing h1,
+            .screen-questions h2 {
+                font-size: clamp(24px, 7vw, 40px);
             }
 
-            .landing .subheading {
-                font-size: 1rem;
-                margin-bottom: 32px;
+            .result-card-statement {
+                font-size: clamp(16px, 3.5vw, 24px);
             }
 
-            .question-text {
-                font-size: 1.2rem;
+            .result-actions {
+                flex-direction: column;
             }
 
-            .action-statement {
-                font-size: 1.1rem;
-            }
-
-            .interrogation {
-                padding: 24px 0;
-            }
-
-            .question-header {
-                margin-bottom: 32px;
-            }
-
-            textarea,
-            .question-textarea {
-                min-height: 100px;
+            .button, .button-secondary {
+                width: 100%;
+                align-self: auto;
+                text-align: center;
             }
         }
     </style>
 </head>
 <body>
-    <div id="app"></div>
+    <main>
+        <!-- SCREEN 1: LANDING -->
+        <section class="screen active" id="screen-landing">
+            <div class="logo-row">
+                <div class="logo-dot"></div>
+                <span class="logo-text">Praxis</span>
+            </div>
+            
+            <h1>Convert <br> what you <br> <span class="accent">know.</span></h1>
+            
+            <p class="subtext">The bridge between insight and behavioral change.</p>
+            
+            <textarea id="landing-textarea" placeholder="Paste a highlight, idea, or concept that should change your behavior but hasn't..."></textarea>
+            
+            <button class="button" id="begin-btn" disabled>Begin Conversion →</button>
+            
+            <p class="note">No storage. No dashboard. Just the bridge.</p>
+        </section>
 
-    <div id="apiKeyModal" class="modal-overlay">
-        <div class="modal-content">
-            <h2>Praxis</h2>
-            <p>Enter your Anthropic API key to use Praxis</p>
-            <input type="password" id="apiKeyInput" class="modal-input" placeholder="sk-ant-...">
-            <button id="apiKeySaveButton" class="modal-button">Save API Key</button>
-        </div>
-    </div>
+        <!-- SCREEN 2: QUESTIONS -->
+        <section class="screen" id="screen-questions">
+            <div class="progress-container">
+                <div class="progress-label"><span id="question-counter">1</span> of 5</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+            </div>
+            
+            <div class="question-number" id="question-number">01 —</div>
+            
+            <h2 id="question-text"></h2>
+            
+            <textarea id="answer-textarea" placeholder="Your answer..."></textarea>
+            
+            <button class="button" id="next-btn" disabled>Next Question →</button>
+        </section>
+
+        <!-- SCREEN 3: PROCESSING -->
+        <section class="screen" id="screen-processing">
+            <div class="processing-container">
+                <div class="spinner"></div>
+                <p class="processing-text">Synthesizing your responses</p>
+                <p class="processing-subtext">Building your implementation intention...</p>
+            </div>
+        </section>
+
+        <!-- SCREEN 4: RESULT -->
+        <section class="screen" id="screen-result">
+            <div class="result-header">
+                <div class="result-header-dot"></div>
+                <span class="result-header-text">Your Implementation Intention</span>
+            </div>
+            
+            <div class="result-label">If — Then Statement</div>
+            
+            <div id="result-content"></div>
+            
+            <div class="result-actions">
+                <button class="button" id="copy-btn">Copy</button>
+                <button class="button-secondary" id="restart-btn">Start Over</button>
+            </div>
+        </section>
+    </main>
 
     <script>
-        // Configuration
-        const DEFAULT_ANTHROPIC_API_KEY = "";
-        const ANTHROPIC_MODEL = "claude-sonnet-4-20250514";
-        const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
-
-        // State management
-        let state = {
-            currentScreen: 'landing',
+        // ============ STATE ============
+        const state = {
             insight: '',
             questions: [],
             answers: [],
-            currentQuestionIndex: 0,
-            microAction: null,
-            apiKey: '',
+            currentQ: 0,
+            intention: null,
             error: null
         };
 
-        // System prompts
-        const INTERROGATION_SYSTEM_PROMPT = `You are Praxis — a behavioral conversion engine, not a coach.
-Your job is NOT to motivate, summarize, or validate.
-Your job is to force the user to convert a theoretical insight into a concrete behavioral action through targeted interrogation.
+        // ============ DOM REFERENCES ============
+        const elements = {
+            landingTextarea: document.getElementById('landing-textarea'),
+            beginBtn: document.getElementById('begin-btn'),
+            questionCounter: document.getElementById('question-counter'),
+            progressFill: document.getElementById('progress-fill'),
+            questionNumber: document.getElementById('question-number'),
+            questionText: document.getElementById('question-text'),
+            answerTextarea: document.getElementById('answer-textarea'),
+            nextBtn: document.getElementById('next-btn'),
+            resultContent: document.getElementById('result-content'),
+            copyBtn: document.getElementById('copy-btn'),
+            restartBtn: document.getElementById('restart-btn'),
+            screens: {
+                landing: document.getElementById('screen-landing'),
+                questions: document.getElementById('screen-questions'),
+                processing: document.getElementById('screen-processing'),
+                result: document.getElementById('screen-result')
+            }
+        };
 
-You will receive a user's insight. You must generate exactly 5 questions, one at a time.
-Each question must:
-- Be specific to what the user wrote
-- Force them to generate their own meaning (never assume or summarize for them)
-- Progressively deepen from situational → emotional → action
-
-Question sequence logic:
-Q1: What does this insight mean for your specific current situation? (situational grounding)
-Q2: What belief or behavior of yours does this directly contradict? (identity confrontation)
-Q3: You've probably had a version of this insight before. What happened? (pattern surfacing)
-Q4: What is the actual specific blocker — not the general excuse, the real one? (blocker diagnosis)
-Q5: What is the smallest physical action you could do tomorrow that would prove this insight is real for you? (micro-action seed)
-
-Return ONLY a JSON array of 5 question strings. No explanation. No preamble.
-Example format: ["question1", "question2", "question3", "question4", "question5"]`;
-
-        const MICRO_ACTION_SYSTEM_PROMPT = `You are Praxis. You have asked a user 5 interrogation questions about an insight they consumed.
-Based on their answers, generate ONE implementation intention in strict if-then format.
-
-Rules:
-- The action must be anchored to an existing daily event the user already does (event-based cue)
-- The action must be small enough to do in under 5 minutes
-- Do NOT use time-based triggers ("at 9am") — only event-based ("after I...")
-- The output must feel like it was written specifically for this person
-
-Return ONLY a JSON object with this exact structure:
-{
-  "cue": "the existing event/trigger",
-  "action": "the specific micro-action",
-  "full": "If [cue], then I will [action].",
-  "why": "one sentence connecting this action back to their insight"
-}`;
-
-        // Initialize app
-        function init() {
-            checkAndShowAPIKeyModal();
-            render();
-            attachEventListeners();
+        // ============ SCREEN TRANSITIONS ============
+        function showScreen(screenName) {
+            Object.values(elements.screens).forEach(s => s.classList.remove('active'));
+            elements.screens[screenName].classList.add('active');
         }
 
-        // Check if API key is set
-        function checkAndShowAPIKeyModal() {
-            state.apiKey = DEFAULT_ANTHROPIC_API_KEY || sessionStorage.getItem('praxis_api_key') || '';
-            
-            if (!state.apiKey) {
-                document.getElementById('apiKeyModal').classList.add('active');
-            }
-        }
-
-        // Handle API key save
-        document.addEventListener('DOMContentLoaded', function() {
-            const apiKeySaveButton = document.getElementById('apiKeySaveButton');
-            const apiKeyInput = document.getElementById('apiKeyInput');
-
-            if (apiKeySaveButton) {
-                apiKeySaveButton.addEventListener('click', function() {
-                    const apiKey = apiKeyInput.value.trim();
-                    if (apiKey) {
-                        state.apiKey = apiKey;
-                        sessionStorage.setItem('praxis_api_key', apiKey);
-                        document.getElementById('apiKeyModal').classList.remove('active');
-                    }
-                });
-
-                apiKeyInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        apiKeySaveButton.click();
-                    }
-                });
-            }
-
-            init();
+        // ============ SCREEN 1: LANDING ============
+        elements.landingTextarea.addEventListener('input', () => {
+            state.insight = elements.landingTextarea.value.trim();
+            elements.beginBtn.disabled = state.insight.length < 10;
         });
 
-        // Main render function
-        function render() {
-            const app = document.getElementById('app');
-            
-            if (state.currentScreen === 'landing') {
-                app.innerHTML = renderLanding();
-            } else if (state.currentScreen === 'interrogation') {
-                app.innerHTML = renderInterrogation();
-            } else if (state.currentScreen === 'loading') {
-                app.innerHTML = renderLoading();
-            } else if (state.currentScreen === 'micro-action') {
-                app.innerHTML = renderMicroAction();
+        elements.beginBtn.addEventListener('click', async () => {
+            elements.beginBtn.disabled = true;
+            await generateQuestions();
+        });
+
+        async function generateQuestions() {
+            try {
+                showScreen('processing');
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'questions', insight: state.insight })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                state.questions = data.questions;
+                state.answers = [];
+                state.currentQ = 0;
+                state.error = null;
+                showQuestion();
+            } catch (err) {
+                state.error = err.message;
+                showResult();
             }
-
-            attachEventListeners();
         }
 
-        // Screen: Landing
-        function renderLanding() {
-            return `
-                <div class="screen landing active">
-                    <h1>Praxis</h1>
-                    <p class="subheading">Convert what you know into what you do.</p>
-                    <form class="landing-form" id="landingForm">
-                        <textarea id="insightInput" placeholder="Paste an insight, highlight, or idea that should change your behavior..." required></textarea>
-                        <button type="submit">Begin Conversion →</button>
-                    </form>
-                    <p class="small-text">No storage. No dashboard. Just the bridge.</p>
-                </div>
-            `;
+        // ============ SCREEN 2: QUESTIONS ============
+        function showQuestion() {
+            if (state.currentQ < state.questions.length) {
+                elements.questionCounter.textContent = state.currentQ + 1;
+                elements.questionNumber.textContent = String(state.currentQ + 1).padStart(2, '0') + ' —';
+                elements.questionText.textContent = state.questions[state.currentQ];
+                elements.answerTextarea.value = state.answers[state.currentQ] || '';
+                
+                const progress = ((state.currentQ) / 5) * 100;
+                elements.progressFill.style.width = progress + '%';
+                
+                elements.nextBtn.disabled = true;
+                elements.nextBtn.textContent = state.currentQ === 4 ? 'Generate My Intention →' : 'Next Question →';
+                
+                showScreen('questions');
+            }
         }
 
-        // Screen: Interrogation
-        function renderInterrogation() {
-            const question = state.questions[state.currentQuestionIndex];
-            const isLastQuestion = state.currentQuestionIndex === 4;
-            const canGoBack = state.currentQuestionIndex > 0;
+        elements.answerTextarea.addEventListener('input', () => {
+            const answer = elements.answerTextarea.value.trim();
+            elements.nextBtn.disabled = answer.length < 3;
+        });
 
-            return `
-                <div class="screen interrogation active">
-                    <div class="question-header">
-                        <div></div>
-                        <div class="question-number">${state.currentQuestionIndex + 1} of 5</div>
-                    </div>
-                    <div class="question-text">${escapeHtml(question)}</div>
-                    <form class="question-form" id="questionForm">
-                        <textarea class="question-textarea" id="answerInput" placeholder="Your answer..." required></textarea>
-                        <div class="button-group">
-                            <button type="button" class="button-secondary" id="backButton" ${!canGoBack ? 'disabled' : ''}>← Back</button>
-                            <button type="submit">${isLastQuestion ? 'Generate Action →' : 'Next →'}</button>
-                        </div>
-                    </form>
-                </div>
-            `;
+        elements.nextBtn.addEventListener('click', async () => {
+            const answer = elements.answerTextarea.value.trim();
+            state.answers[state.currentQ] = answer;
+
+            if (state.currentQ === 4) {
+                // Last question - generate intention
+                await generateIntention();
+            } else {
+                state.currentQ++;
+                showQuestion();
+            }
+        });
+
+        async function generateIntention() {
+            try {
+                showScreen('processing');
+                const qa = state.questions.map((q, i) => ({ q, a: state.answers[i] }));
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'intention', insight: state.insight, qa })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                state.intention = data;
+                state.error = null;
+                showResult();
+            } catch (err) {
+                state.error = err.message;
+                showResult();
+            }
         }
 
-        // Screen: Loading
-        function renderLoading() {
-            return `
-                <div class="screen loading-state active">
-                    <div class="spinner"></div>
-                    <p class="loading-text">Praxis is analyzing your responses...</p>
-                </div>
-            `;
-        }
-
-        // Screen: Micro-Action
-        function renderMicroAction() {
+        // ============ SCREEN 4: RESULT ============
+        function showResult() {
             if (state.error) {
-                return `
-                    <div class="screen micro-action active">
-                        <div class="error-state">
-                            <p class="error-message">${escapeHtml(state.error)}</p>
-                        </div>
-                        <button id="retryButton">Try Again</button>
-                        <button id="startOverButton" class="button-secondary" style="margin-top: 12px;">Start Over</button>
+                elements.resultContent.innerHTML = `
+                    <div class="error-message">
+                        <strong>Error:</strong> ${state.error}
+                        <br><br>
+                        <button class="button" onclick="location.reload()">Try Again</button>
+                    </div>
+                `;
+            } else {
+                elements.resultContent.innerHTML = `
+                    <div class="result-card">
+                        <div class="result-card-statement">${state.intention.full}</div>
+                        <div class="result-card-why-label">Why This Works</div>
+                        <div class="result-card-why-text">${state.intention.why}</div>
                     </div>
                 `;
             }
-
-            const action = state.microAction;
-            if (!action) return '';
-
-            return `
-                <div class="screen micro-action active">
-                    <div class="micro-action-card">
-                        <div class="action-headline">Your Implementation Intention</div>
-                        <div class="action-statement">${escapeHtml(action.full)}</div>
-                        <div class="action-why"><strong>Why this works:</strong> ${escapeHtml(action.why)}</div>
-                    </div>
-                    <div class="button-group">
-                        <button id="copyButton">Copy</button>
-                        <button id="startOverButton" class="button-secondary">Start Over</button>
-                    </div>
-                </div>
-            `;
+            showScreen('result');
         }
 
-        // Event listeners
-        function attachEventListeners() {
-            if (state.currentScreen === 'landing') {
-                const form = document.getElementById('landingForm');
-                if (form) {
-                    form.addEventListener('submit', handleLandingSubmit);
-                }
-            } else if (state.currentScreen === 'interrogation') {
-                const form = document.getElementById('questionForm');
-                const backButton = document.getElementById('backButton');
-                if (form) {
-                    form.addEventListener('submit', handleQuestionSubmit);
-                }
-                if (backButton) {
-                    backButton.addEventListener('click', handleBackButton);
-                }
-            } else if (state.currentScreen === 'micro-action') {
-                const copyButton = document.getElementById('copyButton');
-                const startOverButtons = document.querySelectorAll('#startOverButton');
-                const retryButton = document.getElementById('retryButton');
-
-                if (copyButton) {
-                    copyButton.addEventListener('click', handleCopyButton);
-                }
-                startOverButtons.forEach(btn => {
-                    btn.addEventListener('click', handleStartOver);
-                });
-                if (retryButton) {
-                    retryButton.addEventListener('click', handleRetry);
-                }
-            }
-        }
-
-        // Handlers
-        async function handleLandingSubmit(e) {
-            e.preventDefault();
-            const insight = document.getElementById('insightInput').value.trim();
-            if (!insight) return;
-
-            state.insight = insight;
-            state.currentScreen = 'loading';
-            render();
-
+        elements.copyBtn.addEventListener('click', async () => {
+            const text = `${state.intention.full}\n\nWhy this works: ${state.intention.why}`;
             try {
-                const questions = await generateQuestions(insight);
-                state.questions = questions;
-                state.currentQuestionIndex = 0;
-                state.answers = [];
-                state.currentScreen = 'interrogation';
-                state.error = null;
-                render();
-            } catch (error) {
-                state.error = 'Something went wrong. Check your API key and try again.';
-                state.currentScreen = 'micro-action';
-                render();
-            }
-        }
-
-        async function handleQuestionSubmit(e) {
-            e.preventDefault();
-            const answer = document.getElementById('answerInput').value.trim();
-            if (!answer) return;
-
-            state.answers.push(answer);
-            const isLastQuestion = state.currentQuestionIndex === 4;
-
-            if (isLastQuestion) {
-                state.currentScreen = 'loading';
-                render();
-
-                try {
-                    const microAction = await generateMicroAction(state.insight, state.answers);
-                    state.microAction = microAction;
-                    state.currentScreen = 'micro-action';
-                    state.error = null;
-                    render();
-                } catch (error) {
-                    state.error = 'Something went wrong. Check your API key and try again.';
-                    state.currentScreen = 'micro-action';
-                    render();
-                }
-            } else {
-                state.currentQuestionIndex += 1;
-                state.currentScreen = 'interrogation';
-                render();
-            }
-        }
-
-        function handleBackButton(e) {
-            e.preventDefault();
-            if (state.currentQuestionIndex > 0) {
-                state.currentQuestionIndex -= 1;
-                state.answers.pop();
-                render();
-            }
-        }
-
-        function handleCopyButton() {
-            const text = state.microAction.full;
-            navigator.clipboard.writeText(text).then(() => {
-                const button = document.getElementById('copyButton');
-                const originalText = button.textContent;
-                button.textContent = 'Copied!';
+                await navigator.clipboard.writeText(text);
+                const originalText = elements.copyBtn.textContent;
+                elements.copyBtn.textContent = 'Copied ✓';
                 setTimeout(() => {
-                    button.textContent = originalText;
+                    elements.copyBtn.textContent = originalText;
                 }, 2000);
-            });
-        }
+            } catch (err) {
+                console.error('Copy failed:', err);
+            }
+        });
 
-        function handleStartOver() {
-            state = {
-                currentScreen: 'landing',
-                insight: '',
-                questions: [],
-                answers: [],
-                currentQuestionIndex: 0,
-                microAction: null,
-                apiKey: state.apiKey,
-                error: null
-            };
-            render();
-        }
-
-        function handleRetry() {
-            state.currentScreen = 'loading';
+        elements.restartBtn.addEventListener('click', () => {
+            state.insight = '';
+            state.questions = [];
+            state.answers = [];
+            state.currentQ = 0;
+            state.intention = null;
             state.error = null;
-            render();
-
-            generateMicroAction(state.insight, state.answers)
-                .then(microAction => {
-                    state.microAction = microAction;
-                    state.currentScreen = 'micro-action';
-                    render();
-                })
-                .catch(error => {
-                    state.error = 'Something went wrong. Check your API key and try again.';
-                    state.currentScreen = 'micro-action';
-                    render();
-                });
-        }
-
-        // API calls
-        async function generateQuestions(insight) {
-            const response = await callAnthropicAPI(
-                INTERROGATION_SYSTEM_PROMPT,
-                `Generate 5 interrogation questions for this insight:\n\n"${insight}"`
-            );
-
-            try {
-                const questions = JSON.parse(response);
-                if (Array.isArray(questions) && questions.length === 5) {
-                    return questions;
-                }
-                throw new Error('Invalid response format');
-            } catch (error) {
-                throw new Error('Failed to parse questions');
-            }
-        }
-
-        async function generateMicroAction(insight, answers) {
-            const answerText = answers
-                .map((answer, i) => `Q${i + 1}: ${answer}`)
-                .join('\n\n');
-
-            const prompt = `Insight: "${insight}"\n\nAnswers:\n${answerText}`;
-
-            const response = await callAnthropicAPI(
-                MICRO_ACTION_SYSTEM_PROMPT,
-                prompt
-            );
-
-            try {
-                const microAction = JSON.parse(response);
-                if (microAction.cue && microAction.action && microAction.full && microAction.why) {
-                    return microAction;
-                }
-                throw new Error('Invalid response format');
-            } catch (error) {
-                throw new Error('Failed to parse micro-action');
-            }
-        }
-
-        async function callAnthropicAPI(systemPrompt, userMessage) {
-            if (!state.apiKey) {
-                throw new Error('No API key provided');
-            }
-
-            const response = await fetch(ANTHROPIC_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-api-key': state.apiKey,
-                    'anthropic-version': '2023-06-01',
-                    'anthropic-dangerous-direct-browser-access': 'true'
-                },
-                body: JSON.stringify({
-                    model: ANTHROPIC_MODEL,
-                    max_tokens: 1000,
-                    system: systemPrompt,
-                    messages: [
-                        {
-                            role: 'user',
-                            content: userMessage
-                        }
-                    ]
-                })
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error?.message || 'API request failed');
-            }
-
-            const data = await response.json();
-            if (data.content && data.content[0] && data.content[0].text) {
-                return data.content[0].text;
-            }
-
-            throw new Error('Invalid API response');
-        }
-
-        // Utility
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
+            elements.landingTextarea.value = '';
+            elements.beginBtn.disabled = true;
+            elements.answerTextarea.value = '';
+            elements.nextBtn.disabled = true;
+            showScreen('landing');
+        });
     </script>
 </body>
 </html>
