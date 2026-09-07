@@ -509,6 +509,18 @@ button:focus,
   align-items: center;
 }
 
+.theme-toggle-btn {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  justify-content: center;
+}
+
+.theme-toggle-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
 .topbar-hamburger {
   display: none;
   width: 32px;
@@ -2070,7 +2082,7 @@ button:focus,
 /* ============================================================
    LIGHT THEME OVERRIDES
    ============================================================ */
-:root {
+:root[data-theme="light"] {
   --bg: #f4f6fb;
   --bg-glass: rgba(255, 255, 255, 0.7);
   --bg-glass-2: rgba(255, 255, 255, 0.82);
@@ -2084,7 +2096,7 @@ button:focus,
   --accent2-glow: rgba(255, 107, 53, 0.2);
 }
 
-body::before {
+:root[data-theme="light"] body::before {
   background: radial-gradient(
       ellipse at 20% 20%,
       rgba(200, 255, 0, 0.16) 0%,
@@ -2102,20 +2114,20 @@ body::before {
     );
 }
 
-body::after {
+:root[data-theme="light"] body::after {
   opacity: 0.05;
   mix-blend-mode: normal;
 }
 
-#sidebar {
+:root[data-theme="light"] #sidebar {
   background: rgba(255, 255, 255, 0.62);
 }
 
-#topbar {
+:root[data-theme="light"] #topbar {
   background: rgba(255, 255, 255, 0.62);
 }
 
-#modal-root {
+:root[data-theme="light"] #modal-root {
   background: rgba(244, 246, 251, 0.65);
 }
 
