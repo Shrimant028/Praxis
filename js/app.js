@@ -72,6 +72,81 @@ window.Praxis = {
   closeSidebarMobile,
 };
 
+// ---------- THEME ----------
+
+const THEME_KEY = "praxis_theme";
+const THEME_COLORS = {
+  dark: "#0a0a0f",
+  light: "#f4f6fb",
+};
+
+function getInitialTheme() {
+  try {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === "light" || saved === "dark") return saved;
+  } catch {}
+  return window.matchMedia &&
+    window.matchMedia("(prefers-color-scheme: light)").matches
+    ? "light"
+    : "dark";
+}
+
+function getCurrentTheme() {
+  return document.documentElement.dataset.theme === "light" ? "light" : "dark";
+}
+
+function updateThemeColorMeta(theme) {
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute("content", THEME_COLORS[theme]);
+}
+
+function syncThemeToggleButton() {
+  const btn = document.querySelector(".theme-toggle-btn");
+  if (!btn) return;
+  const icon = btn.querySelector(".theme-toggle-icon");
+  const isLight = getCurrentTheme() === "light";
+  if (icon) icon.textContent = isLight ? "☀" : "☾";
+  const nextMode = isLight ? "dark" : "light";
+  btn.setAttribute("aria-label", `Switch to ${nextMode} mode`);
+  btn.setAttribute("title", `Switch to ${nextMode} mode`);
+}
+
+function applyTheme(theme, { persist = true } = {}) {
+  const next = theme === "light" ? "light" : "dark";
+  if (next === "light") document.documentElement.dataset.theme = "light";
+  else delete document.documentElement.dataset.theme;
+  updateThemeColorMeta(next);
+  if (persist) {
+    try {
+      localStorage.setItem(THEME_KEY, next);
+    } catch {}
+  }
+  syncThemeToggleButton();
+}
+
+function toggleTheme() {
+  applyTheme(getCurrentTheme() === "dark" ? "light" : "dark");
+}
+
+function createThemeToggleButton() {
+  const isLight = getCurrentTheme() === "light";
+  const nextMode = isLight ? "dark" : "light";
+  const btn = el(
+    "button",
+    {
+      class: "btn theme-toggle-btn",
+      attrs: {
+        type: "button",
+        "aria-label": `Switch to ${nextMode} mode`,
+        title: `Switch to ${nextMode} mode`,
+      },
+      onClick: () => toggleTheme(),
+    },
+    [el("span", { class: "theme-toggle-icon", text: isLight ? "☀" : "☾" })]
+  );
+  return btn;
+}
+
 // ---------- SIDEBAR ----------
 
 function renderSidebar() {
@@ -356,6 +431,7 @@ function updateTopbar(title, actions = []) {
 
   // Right: actions
   const right = el("div", { class: "topbar-actions" });
+  right.appendChild(createThemeToggleButton());
   for (const a of actions) {
     right.appendChild(a);
   }
@@ -1196,6 +1272,7 @@ function openQuickSearch() {
 // ---------- INIT ----------
 
 function init() {
+  applyTheme(getInitialTheme(), { persist: false });
   // Seed sample data on first run
   seedIfEmpty();
   renderSidebar();
