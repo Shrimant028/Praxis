@@ -1,0 +1,13 @@
+{
+  "name": "praxis",
+  "version": "2.0.0",
+  "private": true,
+  "scripts": {
+    "test": "echo \"No automated tests configured\""
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.867.0",
+    "@aws-sdk/s3-request-presigner": "^3.867.0",
+    "@supabase/supabase-js": "^2.56.0"
+  }
+}

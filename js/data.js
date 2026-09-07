@@ -1,11 +1,15 @@
 // js/data.js
-// Praxis data layer — all persistence is via localStorage.
-// Keys: praxis_sources, praxis_highlights, praxis_conversions
+// Praxis data layer — Supabase-backed APIs are source of truth.
+// localStorage is used for migration source, cache, and UI preferences only.
 
 const KEYS = {
   sources: "praxis_sources",
   highlights: "praxis_highlights",
   conversions: "praxis_conversions",
+  ownerKey: "praxis_owner_key",
+  migrationStatus: "praxis_migration_v1_status",
+  migrationAt: "praxis_migration_v1_at",
+  mode: "praxis_data_mode",
 };
 
 export const COLORS = [
@@ -19,9 +23,17 @@ export const COLORS = [
   "#ffd93d",
 ];
 
-// ---------- internal helpers ----------
+const state = {
+  ownerKey: null,
+  mode: "initializing",
+  cache: {
+    sources: [],
+    highlights: [],
+    conversions: [],
+  },
+};
 
-function read(key, fallback) {
+function readLocal(key, fallback) {
   try {
     const raw = localStorage.getItem(key);
     if (raw == null) return fallback;
@@ -32,12 +44,21 @@ function read(key, fallback) {
   }
 }
 
-function write(key, value) {
+function writeLocal(key, value) {
   try {
     localStorage.setItem(key, JSON.stringify(value));
     return true;
   } catch (e) {
     console.error(`[data] failed to write ${key}:`, e);
+    return false;
+  }
+}
+
+function writeRawLocal(key, value) {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch {
     return false;
   }
 }
@@ -55,13 +76,133 @@ function nowIso() {
   return new Date().toISOString();
 }
 
+function ensureOwnerKey() {
+  if (state.ownerKey) return state.ownerKey;
+  let existing = "";
+  try {
+    existing = String(localStorage.getItem(KEYS.ownerKey) || "").trim();
+  } catch {}
+  if (/^[a-zA-Z0-9_-]{8,128}$/.test(existing)) {
+    state.ownerKey = existing;
+    return existing;
+  }
+  const next = `px_${Date.now().toString(36)}${Math.random()
+    .toString(36)
+    .slice(2, 10)}`;
+  writeRawLocal(KEYS.ownerKey, next);
+  state.ownerKey = next;
+  return next;
+}
+
+function setMode(nextMode) {
+  state.mode = nextMode;
+  writeRawLocal(KEYS.mode, nextMode);
+}
+
+async function api(path, { method = "GET", body = null } = {}) {
+  const headers = {
+    "X-Praxis-Owner-Key": ensureOwnerKey(),
+  };
+  if (body != null) headers["Content-Type"] = "application/json";
+  const res = await fetch(path, {
+    method,
+    headers,
+    body: body != null ? JSON.stringify(body) : undefined,
+  });
+  let data = {};
+  try {
+    data = await res.json();
+  } catch {}
+  if (!res.ok) {
+    throw new Error(data.error || `Request failed (${res.status})`);
+  }
+  return data;
+}
+
+function cacheToLocal() {
+  writeLocal(KEYS.sources, state.cache.sources);
+  writeLocal(KEYS.highlights, state.cache.highlights);
+  writeLocal(KEYS.conversions, state.cache.conversions);
+}
+
+function loadLocalIntoCache() {
+  state.cache.sources = readLocal(KEYS.sources, []);
+  state.cache.highlights = readLocal(KEYS.highlights, []);
+  state.cache.conversions = readLocal(KEYS.conversions, []);
+}
+
+function applySnapshot(snapshot) {
+  state.cache.sources = Array.isArray(snapshot.sources) ? snapshot.sources : [];
+  state.cache.highlights = Array.isArray(snapshot.highlights)
+    ? snapshot.highlights
+    : [];
+  state.cache.conversions = Array.isArray(snapshot.conversions)
+    ? snapshot.conversions
+    : [];
+  cacheToLocal();
+}
+
+async function fetchRemoteSnapshot() {
+  const snapshot = await api("/api/data/snapshot");
+  applySnapshot(snapshot);
+  return snapshot;
+}
+
+function getMigrationStatus() {
+  try {
+    return String(localStorage.getItem(KEYS.migrationStatus) || "");
+  } catch {
+    return "";
+  }
+}
+
+async function migrateLocalToRemoteIfNeeded() {
+  const status = getMigrationStatus();
+  if (status === "done") return;
+  const localSources = readLocal(KEYS.sources, []);
+  const localHighlights = readLocal(KEYS.highlights, []);
+  const localConversions = readLocal(KEYS.conversions, []);
+  if (
+    localSources.length === 0 &&
+    localHighlights.length === 0 &&
+    localConversions.length === 0
+  ) {
+    writeRawLocal(KEYS.migrationStatus, "done");
+    writeRawLocal(KEYS.migrationAt, nowIso());
+    return;
+  }
+  await api("/api/data/migrate", {
+    method: "POST",
+    body: {
+      schemaVersion: 1,
+      sources: localSources,
+      highlights: localHighlights,
+      conversions: localConversions,
+    },
+  });
+  writeRawLocal(KEYS.migrationStatus, "done");
+  writeRawLocal(KEYS.migrationAt, nowIso());
+}
+
+export async function initDataLayer() {
+  ensureOwnerKey();
+  loadLocalIntoCache();
+  try {
+    await migrateLocalToRemoteIfNeeded();
+    await fetchRemoteSnapshot();
+    setMode("remote");
+  } catch (err) {
+    console.warn("[data] remote init failed, using local fallback:", err);
+    setMode("local-fallback");
+    loadLocalIntoCache();
+  }
+}
+
 function pickColor() {
-  const existing = getSources();
   const usedCounts = {};
-  existing.forEach((s) => {
+  state.cache.sources.forEach((s) => {
     usedCounts[s.color] = (usedCounts[s.color] || 0) + 1;
   });
-  // Prefer least-used color
   let best = COLORS[0];
   let bestCount = Infinity;
   for (const c of COLORS) {
@@ -74,18 +215,25 @@ function pickColor() {
   return best;
 }
 
+function isRemoteMode() {
+  return state.mode === "remote";
+}
+
+function mustPersistLocally() {
+  return state.mode === "local-fallback";
+}
+
 // ---------- Sources ----------
 
 export function getSources() {
-  return read(KEYS.sources, []);
+  return state.cache.sources.slice();
 }
 
 export function getSource(id) {
-  return getSources().find((s) => s.id === id) || null;
+  return state.cache.sources.find((s) => s.id === id) || null;
 }
 
-export function addSource(data) {
-  const sources = getSources();
+export async function addSource(data) {
   const source = {
     id: genId(),
     title: (data.title || "Untitled").trim(),
@@ -95,58 +243,67 @@ export function addSource(data) {
     createdAt: nowIso(),
     updatedAt: nowIso(),
   };
-  sources.push(source);
-  write(KEYS.sources, sources);
+  if (isRemoteMode()) {
+    await api("/api/data/sources", { method: "POST", body: source });
+    await fetchRemoteSnapshot();
+    return getSource(source.id);
+  }
+  state.cache.sources.push(source);
+  if (mustPersistLocally()) cacheToLocal();
   return source;
 }
 
-export function updateSource(id, data) {
-  const sources = getSources();
-  const idx = sources.findIndex((s) => s.id === id);
-  if (idx === -1) return null;
-  sources[idx] = {
-    ...sources[idx],
+export async function updateSource(id, data) {
+  const existing = getSource(id);
+  if (!existing) return null;
+  const patch = {
     ...data,
     updatedAt: nowIso(),
   };
-  write(KEYS.sources, sources);
-  return sources[idx];
+  if (isRemoteMode()) {
+    await api("/api/data/sources", {
+      method: "PATCH",
+      body: { id, ...patch },
+    });
+    await fetchRemoteSnapshot();
+    return getSource(id);
+  }
+  const idx = state.cache.sources.findIndex((s) => s.id === id);
+  state.cache.sources[idx] = { ...state.cache.sources[idx], ...patch };
+  if (mustPersistLocally()) cacheToLocal();
+  return state.cache.sources[idx];
 }
 
-export function deleteSource(id) {
-  const sources = getSources().filter((s) => s.id !== id);
-  write(KEYS.sources, sources);
-  // Cascade delete highlights + their conversions
-  const allHighlights = getHighlights();
-  const removedHighlightIds = allHighlights
+export async function deleteSource(id) {
+  if (isRemoteMode()) {
+    await api("/api/data/sources", { method: "DELETE", body: { id } });
+    await fetchRemoteSnapshot();
+    return;
+  }
+
+  state.cache.sources = state.cache.sources.filter((s) => s.id !== id);
+  const removedHighlightIds = state.cache.highlights
     .filter((h) => h.sourceId === id)
     .map((h) => h.id);
-  const remainingHighlights = allHighlights.filter(
-    (h) => h.sourceId !== id
+  state.cache.highlights = state.cache.highlights.filter((h) => h.sourceId !== id);
+  state.cache.conversions = state.cache.conversions.filter(
+    (c) => !removedHighlightIds.includes(c.highlightId)
   );
-  write(KEYS.highlights, remainingHighlights);
-  if (removedHighlightIds.length) {
-    const remainingConversions = getConversions().filter(
-      (c) => !removedHighlightIds.includes(c.highlightId)
-    );
-    write(KEYS.conversions, remainingConversions);
-  }
+  if (mustPersistLocally()) cacheToLocal();
 }
 
 // ---------- Highlights ----------
 
 export function getHighlights(sourceId) {
-  const all = read(KEYS.highlights, []);
-  if (sourceId) return all.filter((h) => h.sourceId === sourceId);
-  return all;
+  if (!sourceId) return state.cache.highlights.slice();
+  return state.cache.highlights.filter((h) => h.sourceId === sourceId);
 }
 
 export function getHighlight(id) {
-  return getHighlights().find((h) => h.id === id) || null;
+  return state.cache.highlights.find((h) => h.id === id) || null;
 }
 
-export function addHighlight(data) {
-  const all = getHighlights();
+export async function addHighlight(data) {
   const hl = {
     id: genId(),
     sourceId: data.sourceId,
@@ -156,43 +313,59 @@ export function addHighlight(data) {
     converted: false,
     createdAt: nowIso(),
   };
-  all.push(hl);
-  write(KEYS.highlights, all);
-  // Touch source updatedAt
-  if (hl.sourceId) {
-    updateSource(hl.sourceId, {});
+  if (isRemoteMode()) {
+    await api("/api/data/highlights", { method: "POST", body: hl });
+    await updateSource(hl.sourceId, {});
+    await fetchRemoteSnapshot();
+    return getHighlight(hl.id);
   }
+  state.cache.highlights.push(hl);
+  const src = getSource(hl.sourceId);
+  if (src) {
+    src.updatedAt = nowIso();
+  }
+  if (mustPersistLocally()) cacheToLocal();
   return hl;
 }
 
-export function updateHighlight(id, data) {
-  const all = getHighlights();
-  const idx = all.findIndex((h) => h.id === id);
-  if (idx === -1) return null;
-  all[idx] = { ...all[idx], ...data };
-  write(KEYS.highlights, all);
-  return all[idx];
+export async function updateHighlight(id, data) {
+  const existing = getHighlight(id);
+  if (!existing) return null;
+  if (isRemoteMode()) {
+    await api("/api/data/highlights", {
+      method: "PATCH",
+      body: { id, ...data },
+    });
+    await fetchRemoteSnapshot();
+    return getHighlight(id);
+  }
+  const idx = state.cache.highlights.findIndex((h) => h.id === id);
+  state.cache.highlights[idx] = { ...state.cache.highlights[idx], ...data };
+  if (mustPersistLocally()) cacheToLocal();
+  return state.cache.highlights[idx];
 }
 
-export function deleteHighlight(id) {
-  const all = getHighlights().filter((h) => h.id !== id);
-  write(KEYS.highlights, all);
-  const conversions = getConversions().filter(
+export async function deleteHighlight(id) {
+  if (isRemoteMode()) {
+    await api("/api/data/highlights", { method: "DELETE", body: { id } });
+    await fetchRemoteSnapshot();
+    return;
+  }
+  state.cache.highlights = state.cache.highlights.filter((h) => h.id !== id);
+  state.cache.conversions = state.cache.conversions.filter(
     (c) => c.highlightId !== id
   );
-  write(KEYS.conversions, conversions);
+  if (mustPersistLocally()) cacheToLocal();
 }
 
 // ---------- Conversions ----------
 
 export function getConversions(highlightId) {
-  const all = read(KEYS.conversions, []);
-  if (highlightId) return all.filter((c) => c.highlightId === highlightId);
-  return all;
+  if (!highlightId) return state.cache.conversions.slice();
+  return state.cache.conversions.filter((c) => c.highlightId === highlightId);
 }
 
-export function addConversion(data) {
-  const all = getConversions();
+export async function addConversion(data) {
   const conv = {
     id: genId(),
     highlightId: data.highlightId || null,
@@ -204,13 +377,70 @@ export function addConversion(data) {
     intentionWhy: data.intentionWhy || "",
     createdAt: nowIso(),
   };
-  all.push(conv);
-  write(KEYS.conversions, all);
-  // Mark highlight as converted
-  if (conv.highlightId) {
-    updateHighlight(conv.highlightId, { converted: true });
+  if (isRemoteMode()) {
+    await api("/api/data/conversions", { method: "POST", body: conv });
+    if (conv.highlightId) {
+      await api("/api/data/highlights", {
+        method: "PATCH",
+        body: { id: conv.highlightId, converted: true },
+      });
+    }
+    await fetchRemoteSnapshot();
+    return state.cache.conversions.find((c) => c.id === conv.id) || conv;
   }
+  state.cache.conversions.push(conv);
+  if (conv.highlightId) {
+    const idx = state.cache.highlights.findIndex((h) => h.id === conv.highlightId);
+    if (idx !== -1) state.cache.highlights[idx].converted = true;
+  }
+  if (mustPersistLocally()) cacheToLocal();
   return conv;
+}
+
+// ---------- Files / R2 ----------
+
+export async function uploadOriginalFile({ file, sourceId = null }) {
+  if (!(file instanceof File)) {
+    throw new Error("Invalid file");
+  }
+  const sign = await api("/api/files/sign-upload", {
+    method: "POST",
+    body: {
+      fileName: file.name,
+      mimeType: file.type || "text/plain",
+      sizeBytes: file.size,
+      sourceId,
+    },
+  });
+  const putRes = await fetch(sign.uploadUrl, {
+    method: "PUT",
+    headers: sign.requiredHeaders || {
+      "Content-Type": file.type || "application/octet-stream",
+    },
+    body: file,
+  });
+  if (!putRes.ok) {
+    throw new Error(`R2 upload failed (${putRes.status})`);
+  }
+  const registered = await api("/api/files/register", {
+    method: "POST",
+    body: {
+      objectKey: sign.objectKey,
+      fileName: file.name,
+      mimeType: file.type || "text/plain",
+      sizeBytes: file.size,
+      sourceId,
+    },
+  });
+  return registered.file;
+}
+
+export async function getFileDownloadUrl(fileId) {
+  const res = await api("/api/files/sign-download", {
+    method: "POST",
+    body: { fileId },
+  });
+  return res;
 }
 
 // ---------- Storage usage ----------
@@ -222,13 +452,11 @@ export function getStorageUsage() {
       const key = localStorage.key(i);
       if (!key) continue;
       const val = localStorage.getItem(key) || "";
-      // Each char in localStorage is UTF-16, ~2 bytes
       totalBytes += (key.length + val.length) * 2;
     }
   } catch (e) {
     return { used: 0, percent: 0 };
   }
-  // Most browsers cap localStorage at ~5MB
   const quota = 5 * 1024 * 1024;
   const percent = Math.min(100, (totalBytes / quota) * 100);
   return { used: totalBytes, percent };
@@ -236,44 +464,58 @@ export function getStorageUsage() {
 
 // ---------- Danger zone ----------
 
-export function clearAll() {
-  write(KEYS.sources, []);
-  write(KEYS.highlights, []);
-  write(KEYS.conversions, []);
+export async function clearAll() {
+  if (isRemoteMode()) {
+    await api("/api/data/clear", { method: "POST", body: {} });
+    await fetchRemoteSnapshot();
+  } else {
+    state.cache.sources = [];
+    state.cache.highlights = [];
+    state.cache.conversions = [];
+    cacheToLocal();
+  }
 }
 
 // ---------- Seed (only if first run) ----------
 
-export function seedIfEmpty() {
+export async function seedIfEmpty() {
   if (getSources().length > 0) return;
-  const book = addSource({
+  const book = await addSource({
     title: "Atomic Habits",
     type: "book",
     author: "James Clear",
   });
-  addHighlight({
-    sourceId: book.id,
-    text: "You do not rise to the level of your goals. You fall to the level of your systems.",
-    tags: ["systems", "habits"],
-    note: "This reframes every failed goal as a systems-design problem.",
-    converted: false,
-  });
-  addHighlight({
-    sourceId: book.id,
-    text: "Habits are the compound interest of self-improvement.",
-    tags: ["compounding"],
-    converted: false,
-  });
+  if (book) {
+    await addHighlight({
+      sourceId: book.id,
+      text: "You do not rise to the level of your goals. You fall to the level of your systems.",
+      tags: ["systems", "habits"],
+      note: "This reframes every failed goal as a systems-design problem.",
+      converted: false,
+    });
+    await addHighlight({
+      sourceId: book.id,
+      text: "Habits are the compound interest of self-improvement.",
+      tags: ["compounding"],
+      converted: false,
+    });
+  }
 
-  const article = addSource({
+  const article = await addSource({
     title: "Deep Work",
     type: "article",
     author: "Cal Newport",
   });
-  addHighlight({
-    sourceId: article.id,
-    text: "The ability to perform deep work is becoming increasingly rare at exactly the same time it is becoming increasingly valuable.",
-    tags: ["focus", "deep-work"],
-    converted: false,
-  });
+  if (article) {
+    await addHighlight({
+      sourceId: article.id,
+      text: "The ability to perform deep work is becoming increasingly rare at exactly the same time it is becoming increasingly valuable.",
+      tags: ["focus", "deep-work"],
+      converted: false,
+    });
+  }
+}
+
+export function getDataMode() {
+  return state.mode;
 }
