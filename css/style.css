@@ -1,7 +1,7 @@
 /* ============================================================
    PRAXIS — style.css
    Glassmorphism design system:
-   Frosted glass panels floating over a dark gradient background.
+   Frosted glass panels floating over a light gradient background.
    ============================================================ */
 
 /* ---------- CSS Variables ---------- */
@@ -2065,4 +2065,76 @@ button:focus,
       0 8px 32px rgba(0, 0, 0, 0.5),
       inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
+}
+
+/* ============================================================
+   LIGHT THEME OVERRIDES
+   ============================================================ */
+:root {
+  --bg: #f4f6fb;
+  --bg-glass: rgba(255, 255, 255, 0.7);
+  --bg-glass-2: rgba(255, 255, 255, 0.82);
+  --bg-glass-3: rgba(255, 255, 255, 0.92);
+  --border-glass: rgba(31, 41, 55, 0.12);
+  --border-glass-2: rgba(31, 41, 55, 0.2);
+  --text: #1f2937;
+  --text2: #4b5563;
+  --text3: #6b7280;
+  --accent-glow: rgba(166, 214, 0, 0.2);
+  --accent2-glow: rgba(255, 107, 53, 0.2);
+}
+
+body::before {
+  background: radial-gradient(
+      ellipse at 20% 20%,
+      rgba(200, 255, 0, 0.16) 0%,
+      transparent 52%
+    ),
+    radial-gradient(
+      ellipse at 80% 80%,
+      rgba(255, 107, 53, 0.12) 0%,
+      transparent 52%
+    ),
+    radial-gradient(
+      ellipse at 50% 50%,
+      rgba(100, 80, 255, 0.1) 0%,
+      transparent 72%
+    );
+}
+
+body::after {
+  opacity: 0.05;
+  mix-blend-mode: normal;
+}
+
+#sidebar {
+  background: rgba(255, 255, 255, 0.62);
+}
+
+#topbar {
+  background: rgba(255, 255, 255, 0.62);
+}
+
+#modal-root {
+  background: rgba(244, 246, 251, 0.65);
+}
+
+.modal {
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.context-menu {
+  background: rgba(255, 255, 255, 0.94);
+}
+
+#conversion-panel {
+  background: rgba(244, 246, 251, 0.96);
+}
+
+.toast {
+  background: rgba(255, 255, 255, 0.94);
+}
+
+#sidebar-overlay {
+  background: rgba(148, 163, 184, 0.32);
 }
