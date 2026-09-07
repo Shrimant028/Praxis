@@ -12,7 +12,9 @@ import {
   addHighlight,
   updateHighlight,
   getStorageUsage,
+  initDataLayer,
   seedIfEmpty,
+  uploadOriginalFile,
 } from "./data.js";
 import {
   renderHome,
@@ -264,17 +266,21 @@ function renderSidebar() {
                 title: `Delete "${s.title}"?`,
                 message:
                   "This will also delete all highlights and conversions for this source.",
-                onConfirm: () => {
-                  deleteSource(s.id);
-                  renderSidebar();
-                  if (
-                    location.hash.startsWith(`#source/${s.id}`)
-                  ) {
-                    location.hash = "#home";
-                  } else {
-                    rerenderCurrent();
+                onConfirm: async () => {
+                  try {
+                    await deleteSource(s.id);
+                    renderSidebar();
+                    if (
+                      location.hash.startsWith(`#source/${s.id}`)
+                    ) {
+                      location.hash = "#home";
+                    } else {
+                      rerenderCurrent();
+                    }
+                    toast("Source deleted");
+                  } catch (err) {
+                    toast(err.message || "Failed to delete source");
                   }
-                  toast("Source deleted");
                 },
               }),
           },
@@ -296,15 +302,19 @@ function renderSidebar() {
                 title: `Delete "${s.title}"?`,
                 message:
                   "This will also delete all highlights and conversions for this source.",
-                onConfirm: () => {
-                  deleteSource(s.id);
-                  renderSidebar();
-                  if (location.hash.startsWith(`#source/${s.id}`)) {
-                    location.hash = "#home";
-                  } else {
-                    rerenderCurrent();
+                onConfirm: async () => {
+                  try {
+                    await deleteSource(s.id);
+                    renderSidebar();
+                    if (location.hash.startsWith(`#source/${s.id}`)) {
+                      location.hash = "#home";
+                    } else {
+                      rerenderCurrent();
+                    }
+                    toast("Source deleted");
+                  } catch (err) {
+                    toast(err.message || "Failed to delete source");
                   }
-                  toast("Source deleted");
                 },
               }),
           },
@@ -655,7 +665,7 @@ function openAddSourceModal() {
       "button",
       {
         class: "btn btn-primary",
-        onClick: () => {
+        onClick: async () => {
           const titleInput = modal.querySelector(
             ".form-group:nth-child(1) .form-input"
           );
@@ -667,15 +677,19 @@ function openAddSourceModal() {
             titleInput.focus();
             return;
           }
-          const source = addSource({
-            title,
-            type: selectedType,
-            author: authorInput.value.trim(),
-          });
-          closeModal();
-          renderSidebar();
-          location.hash = `#source/${source.id}`;
-          toast("Source created");
+          try {
+            const source = await addSource({
+              title,
+              type: selectedType,
+              author: authorInput.value.trim(),
+            });
+            closeModal();
+            renderSidebar();
+            location.hash = `#source/${source.id}`;
+            toast("Source created");
+          } catch (err) {
+            toast(err.message || "Failed to create source");
+          }
         },
       },
       ["Create Source →"]
@@ -725,18 +739,22 @@ function openRenameSourceModal(sourceId) {
         "button",
         {
           class: "btn btn-primary",
-          onClick: () => {
+          onClick: async () => {
             const inp = modal.querySelector(".form-input");
             const v = inp.value.trim();
             if (!v) {
               inp.focus();
               return;
             }
-            updateSource(sourceId, { title: v });
-            closeModal();
-            renderSidebar();
-            rerenderCurrent();
-            toast("Renamed");
+            try {
+              await updateSource(sourceId, { title: v });
+              closeModal();
+              renderSidebar();
+              rerenderCurrent();
+              toast("Renamed");
+            } catch (err) {
+              toast(err.message || "Failed to rename source");
+            }
           },
         },
         ["Save"]
@@ -856,23 +874,27 @@ function openAddHighlightModal(sourceId, opts = {}) {
         "button",
         {
           class: "btn btn-primary",
-          onClick: () => {
+          onClick: async () => {
             const text = textarea.value.trim();
             if (!text) {
               textarea.focus();
               return;
             }
             const note = noteGroup.querySelector("textarea").value.trim();
-            addHighlight({
-              sourceId,
-              text,
-              tags: [...tags],
-              note,
-            });
-            closeModal();
-            renderSidebar();
-            rerenderCurrent();
-            toast("Highlight added");
+            try {
+              await addHighlight({
+                sourceId,
+                text,
+                tags: [...tags],
+                note,
+              });
+              closeModal();
+              renderSidebar();
+              rerenderCurrent();
+              toast("Highlight added");
+            } catch (err) {
+              toast(err.message || "Failed to add highlight");
+            }
           },
         },
         ["Save Highlight →"]
@@ -929,12 +951,16 @@ function openAddNoteModal(highlightId) {
         "button",
         {
           class: "btn btn-primary",
-          onClick: () => {
+          onClick: async () => {
             const ta = modal.querySelector(".form-textarea");
-            updateHighlight(highlightId, { note: ta.value.trim() });
-            closeModal();
-            rerenderCurrent();
-            toast("Note saved");
+            try {
+              await updateHighlight(highlightId, { note: ta.value.trim() });
+              closeModal();
+              rerenderCurrent();
+              toast("Note saved");
+            } catch (err) {
+              toast(err.message || "Failed to save note");
+            }
           },
         },
         ["Save"]
@@ -1072,7 +1098,7 @@ function importTxt(sourceId) {
     const file = input.files && input.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       const text = String(reader.result || "");
       // Split by double newline
       const chunks = text
@@ -1081,13 +1107,27 @@ function importTxt(sourceId) {
         .filter((c) => c.length > 20);
       let count = 0;
       for (const c of chunks) {
-        addHighlight({ sourceId, text: c, tags: [] });
-        count++;
+        try {
+          await addHighlight({ sourceId, text: c, tags: [] });
+          count++;
+        } catch (err) {
+          toast(err.message || "Failed to import some highlights");
+          break;
+        }
       }
       if (count === 0) {
         toast("No highlights found in file");
       } else {
         toast(`Imported ${count} highlight${count !== 1 ? "s" : ""}`);
+      }
+      try {
+        await uploadOriginalFile({ file, sourceId });
+      } catch (err) {
+        toast(
+          `Highlights imported, but file backup to R2 failed: ${
+            err.message || "Upload failed"
+          }`
+        );
       }
       renderSidebar();
       rerenderCurrent();
@@ -1271,17 +1311,23 @@ function openQuickSearch() {
 
 // ---------- INIT ----------
 
-function init() {
+async function init() {
   applyTheme(getInitialTheme(), { persist: false });
-  // Seed sample data on first run
-  seedIfEmpty();
+  await initDataLayer();
+  await seedIfEmpty();
   renderSidebar();
   if (!location.hash) location.hash = "#home";
   router();
 }
 
 if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", init);
+  document.addEventListener("DOMContentLoaded", () => {
+    init().catch((err) => {
+      toast(err.message || "Failed to initialize app");
+    });
+  });
 } else {
-  init();
+  init().catch((err) => {
+    toast(err.message || "Failed to initialize app");
+  });
 }
